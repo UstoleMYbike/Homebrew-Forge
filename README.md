@@ -22,6 +22,7 @@ Ollama must allow the app's origin. If the connection test fails, start it with
 npm install
 npm run dev                                        # development, localhost:5173
 npm run build && npm run preview -- --port 4173    # production build
+npm test                                           # unit tests
 ```
 
 The installed desktop PWA points at whatever origin you installed it from, so the
@@ -94,5 +95,8 @@ generated content pastes in without reshaping. Notable consequences:
   HTTP, and `localhost` is the only exception.
 - The naming and rarity/level/CR-suggestion prompts are written but not wired to
   any UI.
-- Export as PDF has never been exercised end to end.
-- No automated tests.
+- The D&D Beyond export has never been pasted into the real form end to end.
+  The field names and order were read off the live Creator pages, but no
+  generated entry has actually been saved there.
+- Tests cover the pure logic (parsing, normalization, exporters, field
+  helpers). The React components and the IndexedDB layer are untested.
