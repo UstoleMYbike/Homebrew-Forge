@@ -10,8 +10,9 @@ import {
 } from '../../lib/fields'
 import { DDB_ACTIVATIONS, DDB_DURATION_TYPES, DDB_RANGE_ORIGINS } from '../../lib/schemas'
 import { Assumptions, Divider, Section } from './parts'
+import { RerollNameButton, SuggestTierButton } from '../AssistControls'
 
-function SpellCard({ data, set }) {
+function SpellCard({ data, set, onChange, contentType = 'spell' }) {
   const components = data.components && typeof data.components === 'object' ? data.components : {}
 
   function setComponent(key, value) {
@@ -20,17 +21,22 @@ function SpellCard({ data, set }) {
 
   return (
     <>
-      <EditableText
-        value={data.name}
-        onChange={(v) => set('name', v)}
-        className="text-2xl font-bold text-white"
-        placeholder="Spell name"
-      />
+      <div className="flex items-start gap-1">
+        <EditableText
+          value={data.name}
+          onChange={(v) => set('name', v)}
+          className="text-2xl font-bold text-white"
+          placeholder="Spell name"
+        />
+        <RerollNameButton contentType={contentType} data={data} onChange={onChange} />
+      </div>
 
       <p className="px-2 text-sm italic text-white/60">
         {spellLevelText(data) || 'Level and school'}
         {data.ritual ? ' (ritual)' : ''}
       </p>
+
+      <SuggestTierButton contentType={contentType} data={data} onChange={onChange} />
 
       <Divider />
 

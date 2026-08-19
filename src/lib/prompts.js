@@ -25,6 +25,12 @@ export function buildNamingPrompt() {
   return `Generate an evocative, non-generic name fitting the tone of this description. Respond with ONLY the name as a plain string, no quotes, no extra text.`
 }
 
+/**
+ * Deliberately unused. The D&D Beyond export is built from the real form field
+ * order in exporters.js instead — that layout is fixed, so a local round-trip
+ * only added ~30s of latency and a chance of the model improvising. Kept here
+ * because it's part of the spec's prompt set.
+ */
 export function buildExportFormattingPrompt(contentType) {
   return `Reformat this ${contentType} JSON into the exact field order and plain-text layout D&D Beyond's Homebrew Creator uses for ${contentType}. Respond with ONLY the formatted plain text — no JSON, no markdown, no commentary.`
 }

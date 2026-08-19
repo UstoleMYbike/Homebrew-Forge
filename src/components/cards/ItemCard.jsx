@@ -2,20 +2,24 @@ import EditableText from '../EditableText'
 import { DDB_ITEM_TYPES, DDB_RARITIES } from '../../lib/schemas'
 import { Assumptions, Divider, Section } from './parts'
 import { RARITY_COLORS } from './rarity'
+import { RerollNameButton, SuggestTierButton } from '../AssistControls'
 
 const BASE_TYPES = ['Item', 'Armor', 'Weapon']
 
-function ItemCard({ data, set }) {
+function ItemCard({ data, set, onChange, contentType = 'item' }) {
   const rarityClass = RARITY_COLORS[data.rarity] ?? RARITY_COLORS.Common
 
   return (
     <>
-      <EditableText
-        value={data.name}
-        onChange={(v) => set('name', v)}
-        className="text-2xl font-bold text-white"
-        placeholder="Item name"
-      />
+      <div className="flex items-start gap-1">
+        <EditableText
+          value={data.name}
+          onChange={(v) => set('name', v)}
+          className="text-2xl font-bold text-white"
+          placeholder="Item name"
+        />
+        <RerollNameButton contentType={contentType} data={data} onChange={onChange} />
+      </div>
 
       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 px-2 text-sm italic text-white/60">
         {/* D&D Beyond splits this into a base type plus a closed Type list. */}
@@ -77,6 +81,8 @@ function ItemCard({ data, set }) {
           placeholder="attunement requirement (e.g. by a spellcaster)"
         />
       )}
+
+      <SuggestTierButton contentType={contentType} data={data} onChange={onChange} />
 
       <Divider />
 

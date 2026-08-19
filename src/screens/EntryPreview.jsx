@@ -48,7 +48,7 @@ function EntryPreview({ data, contentType = 'item', autoCheck = false, onChange,
 
       <div className="mx-auto mt-6 w-full max-w-md">
         <div className={`print-card rounded-2xl border-2 bg-white/[0.03] p-5 ${borderClass(contentType, data)}`}>
-          <Card data={data} set={set} />
+          <Card data={data} set={set} onChange={onChange} contentType={contentType} />
         </div>
 
         <BalanceBadge contentType={contentType} data={data} autoCheck={autoCheck} />

@@ -2,6 +2,7 @@ import EditableText from '../EditableText'
 import { abilityModifier, formatSpeed, hitPointsText, joinList, splitList } from '../../lib/fields'
 import { DDB_HIT_DIE_VALUES } from '../../lib/schemas'
 import { Assumptions, Divider, NamedEntries, Section, StatLine } from './parts'
+import { RerollNameButton, SuggestTierButton } from '../AssistControls'
 
 const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha']
 
@@ -13,7 +14,7 @@ const LIST_FIELDS = [
   ['conditionImmunities', 'Condition Immunities'],
 ]
 
-function MonsterCard({ data, set }) {
+function MonsterCard({ data, set, onChange, contentType = 'monster' }) {
   const scores = data.abilityScores && typeof data.abilityScores === 'object' ? data.abilityScores : {}
   const speed = data.speed && typeof data.speed === 'object' ? data.speed : {}
 
@@ -23,17 +24,22 @@ function MonsterCard({ data, set }) {
 
   return (
     <>
-      <EditableText
-        value={data.name}
-        onChange={(v) => set('name', v)}
-        className="text-2xl font-bold text-white"
-        placeholder="Creature name"
-      />
+      <div className="flex items-start gap-1">
+        <EditableText
+          value={data.name}
+          onChange={(v) => set('name', v)}
+          className="text-2xl font-bold text-white"
+          placeholder="Creature name"
+        />
+        <RerollNameButton contentType={contentType} data={data} onChange={onChange} />
+      </div>
 
       <p className="px-2 text-sm italic text-white/60">
         {[data.size, data.creatureType].filter(Boolean).join(' ')}
         {data.alignment ? `, ${data.alignment}` : ''}
       </p>
+
+      <SuggestTierButton contentType={contentType} data={data} onChange={onChange} />
 
       <Divider />
 

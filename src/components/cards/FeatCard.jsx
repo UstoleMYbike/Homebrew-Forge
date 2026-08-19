@@ -1,19 +1,24 @@
 import EditableText from '../EditableText'
 import { Assumptions, Divider, Section } from './parts'
+import { RerollNameButton } from '../AssistControls'
 
 const CATEGORIES = ['Origin', 'General', 'Fighting Style', 'Epic Boon']
 
-function FeatCard({ data, set }) {
+function FeatCard({ data, set, onChange, contentType = 'feat' }) {
   const benefits = Array.isArray(data.benefits) ? data.benefits : []
 
   return (
     <>
-      <EditableText
-        value={data.name}
-        onChange={(v) => set('name', v)}
-        className="text-2xl font-bold text-white"
-        placeholder="Feat name"
-      />
+      <div className="flex items-start gap-1">
+        <EditableText
+          value={data.name}
+          onChange={(v) => set('name', v)}
+          className="text-2xl font-bold text-white"
+          placeholder="Feat name"
+        />
+        {/* Feats have no tier, so only the naming control applies here. */}
+        <RerollNameButton contentType={contentType} data={data} onChange={onChange} />
+      </div>
 
       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 px-2 text-sm italic text-white/60">
         <select
