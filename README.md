@@ -2,7 +2,41 @@
 
 A mobile-first PWA that generates D&D 5e homebrew — magic items, spells, monsters
 and feats — from a freeform description, using a **local LLM**. No cloud API, no
-API key, no backend, no accounts. Everything runs on your own machine.
+API key, no backend, no accounts. Everything runs on your own machine, so your
+homebrew and your campaign notes never leave it.
+
+This is a generic tool, not tied to any one campaign — if you're a DM who found
+this repo, it works the same way for your table as it does for anyone else's.
+
+## Getting started
+
+You'll need [Node.js](https://nodejs.org) (18+) and [Ollama](https://ollama.com)
+installed first. Then:
+
+```bash
+git clone https://github.com/UstoleMYbike/Homebrew-Forge.git
+cd Homebrew-Forge
+npm run setup
+```
+
+`npm run setup` checks that Ollama is reachable, tells you what to do if it isn't
+(and prints the exact command to pull a model if you don't have one yet), and
+installs the app's dependencies. It's safe to run more than once.
+
+Then:
+
+```bash
+npm run build
+npm run preview -- --port 4173
+```
+
+Open `http://localhost:4173`. On the first launch you'll land on a Settings screen
+that walks you through connecting to your local model — nothing else is needed.
+
+To install it as an app on your phone or desktop instead of just a browser tab, use
+your browser's "Install app" prompt once it's running (Chrome/Edge show one
+automatically; on Android this needs an HTTPS host, since Chrome won't install a
+plain-HTTP page except on `localhost`).
 
 ## Requirements
 
@@ -19,7 +53,7 @@ Ollama must allow the app's origin. If the connection test fails, start it with
 ## Running it
 
 ```bash
-npm install
+npm run setup                                      # first time only — see above
 npm run dev                                        # development, localhost:5173
 npm run build && npm run preview -- --port 4173    # production build
 npm test                                           # unit tests
@@ -36,16 +70,27 @@ preview server has to be running for it to work.
 2. **Home** — pick a content type, describe what you want, hit Generate.
 3. **Preview card** — every field is tap-to-edit. A balance check runs
    automatically in the background and shows any flags as a dismissible badge.
+   A reroll button beside the name suggests an alternate one from the same
+   description; a "Suggest rarity/level/CR" control proposes a tier with its
+   reasoning, and only offers to apply it when the suggestion is one the schema
+   actually accepts.
 4. **Iterate** — Weaker / Stronger / Reroll flavor / Change tier. Keeps exactly
    one prior version for undo.
-5. **Export** — *Copy for D&D Beyond* (field-by-field, in the real form order),
-   *Copy as Markdown* (Homebrewery), or *Export as PDF* (via the print dialog).
+5. **Export** — *Copy for D&D Beyond* (field-by-field, in the real form order —
+   tested end to end by actually saving a generated item there), *Copy as
+   Markdown* (Homebrewery), or *Export as PDF* (via the print dialog).
 6. **Library** — everything generated is saved to IndexedDB, searchable and
-   filterable by type, with edit / duplicate / delete.
+   filterable by type, with edit / duplicate / delete. **Export / Import** buttons
+   in the header move your whole library to a JSON file and back — for backing
+   up, moving to another computer, or handing a set of homebrew to another DM.
+   Re-importing the same file is safe; it updates existing entries by id rather
+   than duplicating them.
 
 ## Layout
 
 ```
+scripts/
+  setup.mjs        checks Ollama, installs dependencies — the first thing to run
 src/
   lib/
     schemas.js     JSON schemas + D&D Beyond enums; the source of truth for shape
@@ -53,10 +98,12 @@ src/
     llm.js         provider-agnostic calls + the JSON parsing safety net
     providers.js   Ollama and OpenAI-compatible adapters
     normalize.js   strips inapplicable fields, migrates older entry shapes
-    library.js     IndexedDB store
+    library.js     IndexedDB store + export/import
     exporters.js   D&D Beyond and Homebrewery formatting
     fields.js      shared display helpers
-  components/cards/  one preview card per content type
+  components/
+    AssistControls.jsx  reroll-name and suggest-tier controls
+    cards/              one preview card per content type
   screens/           Settings, Home, EntryPreview, Library
 ```
 
@@ -93,10 +140,14 @@ generated content pastes in without reshaping. Notable consequences:
 
 - Phone install needs an HTTPS host; Chrome on Android won't install over plain
   HTTP, and `localhost` is the only exception.
-- The naming and rarity/level/CR-suggestion prompts are written but not wired to
-  any UI.
-- The D&D Beyond export has never been pasted into the real form end to end.
-  The field names and order were read off the live Creator pages, but no
-  generated entry has actually been saved there.
-- Tests cover the pure logic (parsing, normalization, exporters, field
-  helpers). The React components and the IndexedDB layer are untested.
+- Tests cover the pure logic (parsing, normalization, exporters, field helpers,
+  library import validation). The React components and the actual IndexedDB
+  read/write calls are untested — they'd need a DOM and a fake IndexedDB
+  respectively.
+- Only D&D 5e is supported. The schemas, prompts, and D&D Beyond export are all
+  specific to it; adapting this to another system would mean rewriting those,
+  not just reconfiguring something.
+
+## License
+
+MIT — see `LICENSE`. Use it, fork it, adapt it for your own table.

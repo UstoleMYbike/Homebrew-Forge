@@ -141,3 +141,73 @@ export async function duplicateEntry(id) {
   const data = { ...existing.data, name: `${nameOf(existing.data)} (copy)` }
   return saveEntry({ contentType: existing.contentType, data })
 }
+
+// ------------------------------------------------------- export / import ---
+// Lets a DM's homebrew move between machines — their own, or another DM's —
+// without needing an account or a server anywhere.
+
+const EXPORT_FORMAT = 'homebrew-forge'
+const EXPORT_VERSION = 1
+const VALID_CONTENT_TYPES = new Set(['item', 'spell', 'monster', 'feat'])
+
+export async function exportLibrary() {
+  return {
+    app: EXPORT_FORMAT,
+    exportVersion: EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    entries: await listEntries(),
+  }
+}
+
+/**
+ * Validates a parsed export file before it touches the store. Rows that are
+ * structurally invalid (unknown content type, missing data) are skipped and
+ * counted rather than throwing, so one bad row in a hand-edited file doesn't
+ * block the rest of a real backup.
+ */
+export function parseLibraryExport(parsed) {
+  const rawEntries = Array.isArray(parsed?.entries)
+    ? parsed.entries
+    : Array.isArray(parsed)
+      ? parsed
+      : null
+  if (!rawEntries) {
+    throw new Error('That file is not a Homebrew Forge library export.')
+  }
+
+  let skipped = 0
+  const entries = []
+  for (const raw of rawEntries) {
+    if (!raw || typeof raw !== 'object' || !VALID_CONTENT_TYPES.has(raw.contentType) || !raw.data) {
+      skipped++
+      continue
+    }
+    entries.push(raw)
+  }
+  return { entries, skipped }
+}
+
+/**
+ * Upserts by id, so re-importing the same backup is idempotent rather than
+ * piling up duplicates. Rows without an id (e.g. a hand-built file) get a
+ * fresh one. Entries are normalized on the way in, same as on the way out,
+ * since an import from an older version of the app may carry an old shape.
+ */
+export async function importEntries(entries) {
+  await run('readwrite', (store) => {
+    for (const raw of entries) {
+      const id = typeof raw.id === 'string' && raw.id ? raw.id : crypto.randomUUID()
+      const now = Date.now()
+      const data = normalizeEntry(raw.contentType, raw.data)
+      store.put({
+        id,
+        contentType: raw.contentType,
+        name: nameOf(data),
+        data,
+        createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : now,
+        updatedAt: typeof raw.updatedAt === 'number' ? raw.updatedAt : now,
+      })
+    }
+  })
+  return entries.length
+}
