@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overscroll-behavior-y: none;
+}
+
+/*
+ * "Export as PDF" goes through the browser's print dialog (Save as PDF), which
+ * needs no backend and keeps text selectable. Strip the app chrome and print
+ * the card on white so it reads as a handout.
+ */
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto;
+    background: #fff !important;
+  }
+
+  .print-root {
+    min-height: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .print-card {
+    max-width: none !important;
+    border: 1px solid #999 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    break-inside: avoid;
+  }
+
+  .print-card,
+  .print-card * {
+    color: #000 !important;
+    background-color: transparent !important;
+  }
+
+  /* Editable fields are buttons on screen; print them as plain text. */
+  .print-card button {
+    border: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    text-align: left !important;
+  }
+
+  .print-card select {
+    appearance: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+}

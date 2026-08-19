@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#151221" />
+    <meta name="description" content="AI-assisted D&D 5e homebrew generator for DMs" />
+    <title>Homebrew Forge</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Captured here rather than in React: Chrome fires this during initial
+      // load, before the app has mounted, and the event is only offered once.
+      window.__installPrompt = null
+      window.__appInstalled = false
+      window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault()
+        window.__installPrompt = event
+        window.dispatchEvent(new Event('hf-installable'))
+      })
+      window.addEventListener('appinstalled', () => {
+        window.__appInstalled = true
+        window.__installPrompt = null
+        window.dispatchEvent(new Event('hf-installable'))
+      })
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
