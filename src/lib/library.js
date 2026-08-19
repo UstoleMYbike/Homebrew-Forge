@@ -6,26 +6,43 @@
 import { normalizeEntry } from './normalize'
 
 const DB_NAME = 'homebrew-forge'
-const DB_VERSION = 1
 const STORE = 'entries'
 
 let dbPromise = null
 
-function openDB() {
-  if (dbPromise) return dbPromise
-  dbPromise = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION)
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(STORE)) {
-        const store = db.createObjectStore(STORE, { keyPath: 'id' })
-        store.createIndex('contentType', 'contentType')
-        store.createIndex('updatedAt', 'updatedAt')
-      }
-    }
+function createStore(db) {
+  if (db.objectStoreNames.contains(STORE)) return
+  const store = db.createObjectStore(STORE, { keyPath: 'id' })
+  store.createIndex('contentType', 'contentType')
+  store.createIndex('updatedAt', 'updatedAt')
+}
+
+function openAt(version) {
+  return new Promise((resolve, reject) => {
+    const request = version ? indexedDB.open(DB_NAME, version) : indexedDB.open(DB_NAME)
+    request.onupgradeneeded = () => createStore(request.result)
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
+}
+
+function openDB() {
+  if (dbPromise) return dbPromise
+  dbPromise = (async () => {
+    // Opened without a fixed version on purpose. Requesting a version lower
+    // than the one already on disk throws VersionError and would leave the
+    // library permanently unopenable; version-less open takes whatever is
+    // there, and creates it at version 1 if it doesn't exist yet.
+    const db = await openAt(null)
+    if (db.objectStoreNames.contains(STORE)) return db
+
+    // Present but missing its store — an interrupted upgrade, or another
+    // opener having created it bare. onupgradeneeded won't fire again at the
+    // same version, so step past it to force the store in.
+    const next = db.version + 1
+    db.close()
+    return openAt(next)
+  })()
   return dbPromise
 }
 

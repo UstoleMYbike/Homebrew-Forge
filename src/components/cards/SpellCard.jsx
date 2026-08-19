@@ -39,7 +39,9 @@ function SpellCard({ data, set }) {
           <span className="shrink-0 font-semibold text-white/70">Casting Time</span>
           <span className="text-white/80">{castingTimeText(data) || '—'}</span>
         </div>
-        <div className="flex flex-wrap items-center gap-2 px-2 text-xs text-white/50">
+        {/* Editor rows below each summary line — they duplicate it, so they
+            don't belong on a printed handout. */}
+        <div className="no-print flex flex-wrap items-center gap-2 px-2 text-xs text-white/50">
           <EditableText
             value={data.castingTimeValue}
             onChange={(v) => set('castingTimeValue', v)}
@@ -62,7 +64,7 @@ function SpellCard({ data, set }) {
           <span className="shrink-0 font-semibold text-white/70">Range</span>
           <span className="text-white/80">{rangeText(data) || '—'}</span>
         </div>
-        <div className="flex flex-wrap items-center gap-2 px-2 text-xs text-white/50">
+        <div className="no-print flex flex-wrap items-center gap-2 px-2 text-xs text-white/50">
           <select
             value={DDB_RANGE_ORIGINS.includes(data.rangeOrigin) ? data.rangeOrigin : 'Self'}
             onChange={(e) => set('rangeOrigin', e.target.value)}
@@ -85,7 +87,7 @@ function SpellCard({ data, set }) {
           <span className="shrink-0 font-semibold text-white/70">Components</span>
           <span className="text-sm text-white/80">{componentsText(components) || '—'}</span>
         </div>
-        <div className="flex flex-wrap gap-3 px-2 pt-1 text-xs text-white/50">
+        <div className="no-print flex flex-wrap gap-3 px-2 pt-1 text-xs text-white/50">
           {['verbal', 'somatic', 'material'].map((key) => (
             <label key={key} className="flex items-center gap-1.5">
               <input
@@ -110,7 +112,7 @@ function SpellCard({ data, set }) {
           <span className="shrink-0 font-semibold text-white/70">Duration</span>
           <span className="text-white/80">{durationText(data) || '—'}</span>
         </div>
-        <div className="flex flex-wrap items-center gap-2 px-2 text-xs text-white/50">
+        <div className="no-print flex flex-wrap items-center gap-2 px-2 text-xs text-white/50">
           {/* Concentration is a duration type on D&D Beyond, not a checkbox. */}
           <select
             value={DDB_DURATION_TYPES.includes(data.durationType) ? data.durationType : 'Instantaneous'}

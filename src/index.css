@@ -69,4 +69,17 @@ body {
     border: 0 !important;
     padding: 0 !important;
   }
+
+  /*
+   * Checkboxes are editing affordances, not content. Hide the control, and
+   * drop any label whose box is unchecked — otherwise a printed handout
+   * asserts things like "requires attunement" about an item that doesn't.
+   */
+  .print-card input[type='checkbox'] {
+    display: none !important;
+  }
+
+  .print-card label:has(input[type='checkbox']:not(:checked)) {
+    display: none !important;
+  }
 }

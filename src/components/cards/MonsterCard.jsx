@@ -50,7 +50,7 @@ function MonsterCard({ data, set }) {
           <span className="text-white/80">{hitPointsText(data) || '—'}</span>
         </div>
         {/* D&D Beyond takes hit dice as three separate inputs. */}
-        <div className="flex flex-wrap items-center gap-1.5 px-2 text-xs text-white/40">
+        <div className="no-print flex flex-wrap items-center gap-1.5 px-2 text-xs text-white/40">
           <EditableText
             value={data.averageHitPoints}
             onChange={(v) => set('averageHitPoints', v)}
@@ -88,7 +88,7 @@ function MonsterCard({ data, set }) {
           <span className="shrink-0 font-semibold text-white/70">Speed</span>
           <span className="text-white/80">{formatSpeed(speed) || '—'}</span>
         </div>
-        <div className="flex flex-wrap gap-2 px-2 pt-1">
+        <div className="no-print flex flex-wrap gap-2 px-2 pt-1">
           {['walk', 'fly', 'swim', 'climb', 'burrow'].map((mode) => (
             <div key={mode} className="flex items-center gap-1 text-xs text-white/40">
               <span className="capitalize">{mode}</span>
