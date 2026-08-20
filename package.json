@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "setup": "node scripts/setup.mjs",
+    "make-portable": "node scripts/make-portable.mjs",
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",

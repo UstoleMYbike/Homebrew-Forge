@@ -38,6 +38,26 @@ your browser's "Install app" prompt once it's running (Chrome/Edge show one
 automatically; on Android this needs an HTTPS host, since Chrome won't install a
 plain-HTTP page except on `localhost`).
 
+## Handing it to another DM on a USB drive
+
+```bash
+npm run make-portable
+```
+
+Produces `portable-build/Homebrew Forge/` — copy that folder onto a USB drive.
+Whoever receives it double-clicks **Start Homebrew Forge.bat**; a browser opens
+and the app runs. Their PC needs **no Node, no npm, and no copy of this repo** —
+the folder carries its own `node.exe` and a small zero-dependency static server.
+
+It's about 90 MB, almost entirely the bundled Node runtime.
+
+The one thing it can't carry is **Ollama** — that's a multi-gigabyte install with
+a background service, so each DM installs it themselves. The included
+`READ ME FIRST.txt` walks a non-technical DM through that in plain language.
+
+Note the app is served rather than opened as a file on purpose: service workers
+and the PWA install prompt both require an http origin, so `file://` won't do.
+
 ## Requirements
 
 A local LLM server, running before you open the app:
@@ -90,7 +110,9 @@ preview server has to be running for it to work.
 
 ```
 scripts/
-  setup.mjs        checks Ollama, installs dependencies — the first thing to run
+  setup.mjs           checks Ollama, installs dependencies — the first thing to run
+  make-portable.mjs   assembles the self-contained USB folder
+  portable/serve.mjs  zero-dependency static server used by the USB build
 src/
   lib/
     schemas.js     JSON schemas + D&D Beyond enums; the source of truth for shape
