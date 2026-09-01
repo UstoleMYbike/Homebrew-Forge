@@ -5,6 +5,7 @@ import {
   componentsText,
   durationText,
   formatSpeed,
+  higherLevelScalingText,
   hitPointsText,
   joinList,
   rangeText,
@@ -48,7 +49,8 @@ function spellMarkdown(data) {
   }
 
   if (data.description) lines.push('', data.description.trim())
-  if (data.atHigherLevels) lines.push('', `***At Higher Levels.*** ${data.atHigherLevels.trim()}`)
+  const higherText = higherLevelScalingText(data)
+  if (higherText) lines.push('', `***At Higher Levels.*** ${higherText}`)
   const classes = joinList(data.classes)
   if (classes) lines.push('', `**Classes:** ${classes}`)
 
@@ -269,7 +271,7 @@ function spellDdb(data) {
     line('Duration Unit', data.durationUnit),
     line('Description', data.description),
     line('Can Cast at Higher Level', data.canCastAtHigherLevel ? 'Yes' : 'No'),
-    line('At Higher Levels', data.atHigherLevels),
+    line('At Higher Levels', higherLevelScalingText(data)),
     line('Ritual', data.ritual ? 'Yes' : 'No'),
     line('Classes', joinList(data.classes)),
   ].filter(Boolean)

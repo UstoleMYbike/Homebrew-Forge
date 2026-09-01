@@ -26,6 +26,12 @@ function canonical(value, options) {
   return options.find((o) => String(o).toLowerCase() === needle) ?? null
 }
 
+/** Pulls "1d6" out of "1 d 6", "1d6 fire damage", etc.; null if nothing matches. */
+function parseDiceExpr(value) {
+  const match = String(value ?? '').match(/(\d+)\s*d\s*(\d+)/i)
+  return match ? `${match[1]}d${match[2]}` : null
+}
+
 /**
  * Older entries stored a single free-text itemType like "Weapon (dagger)".
  * Recover the base type and the base item from it rather than dumping
@@ -128,10 +134,22 @@ function normalizeSpell(data) {
     out.components = components
   }
 
-  // Keep the flag and the text in step rather than trusting either alone.
-  const higher = out.atHigherLevels && String(out.atHigherLevels).trim()
-  out.canCastAtHigherLevel = Boolean(higher)
-  if (!higher) out.atHigherLevels = null
+  // Dice-based scaling only makes sense for a leveled spell that can still be
+  // upcast: a cantrip has no slot to upcast with, and a 9th-level spell has
+  // no higher slot to cast it from.
+  const level = Number(out.level)
+  const canScale = Number.isFinite(level) && level >= 1 && level <= 8
+  const dice = canScale ? parseDiceExpr(out.higherLevelScaling?.dice) : null
+  out.higherLevelScaling = dice
+    ? { dice, effect: String(out.higherLevelScaling?.effect || 'damage').trim() || 'damage' }
+    : null
+
+  // Mutually exclusive with higherLevelScaling — the computed sentence is the
+  // single source of truth once dice scaling is set, so a stale freeform
+  // sentence can't linger alongside it and get exported instead.
+  const higher = out.higherLevelScaling ? null : (String(out.atHigherLevels || '').trim() || null)
+  out.atHigherLevels = higher
+  out.canCastAtHigherLevel = Boolean(out.higherLevelScaling || higher)
 
   return out
 }

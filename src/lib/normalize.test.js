@@ -90,6 +90,52 @@ describe('spell normalization', () => {
     expect(normalizeEntry('spell', { name: 'S', atHigherLevels: '' }).canCastAtHigherLevel).toBe(false)
     expect(normalizeEntry('spell', { name: 'S', atHigherLevels: 'More damage.' }).canCastAtHigherLevel).toBe(true)
   })
+
+  it('keeps a valid higherLevelScaling and drops any freeform text alongside it', () => {
+    // The computed sentence is the single source of truth once dice scaling
+    // is set — a stale freeform sentence can't linger and get exported too.
+    const out = normalizeEntry('spell', {
+      name: 'S', level: 3,
+      higherLevelScaling: { dice: '1d6', effect: 'fire damage' },
+      atHigherLevels: 'This should be dropped.',
+    })
+    expect(out.higherLevelScaling).toEqual({ dice: '1d6', effect: 'fire damage' })
+    expect(out.atHigherLevels).toBeNull()
+    expect(out.canCastAtHigherLevel).toBe(true)
+  })
+
+  it('canonicalises a chatty dice expression down to "NdM"', () => {
+    const out = normalizeEntry('spell', {
+      name: 'S', level: 3, higherLevelScaling: { dice: '1 d 6 fire damage', effect: 'damage' },
+    })
+    expect(out.higherLevelScaling.dice).toBe('1d6')
+  })
+
+  it('defaults a missing effect to "damage"', () => {
+    const out = normalizeEntry('spell', { name: 'S', level: 3, higherLevelScaling: { dice: '1d6' } })
+    expect(out.higherLevelScaling.effect).toBe('damage')
+  })
+
+  it('drops higherLevelScaling when the dice expression is unparseable', () => {
+    const out = normalizeEntry('spell', {
+      name: 'S', level: 3, higherLevelScaling: { dice: 'a lot more', effect: 'damage' },
+    })
+    expect(out.higherLevelScaling).toBeNull()
+  })
+
+  it('forces higherLevelScaling null for a cantrip — no spell slot to upcast with', () => {
+    const out = normalizeEntry('spell', {
+      name: 'S', level: 0, higherLevelScaling: { dice: '1d6', effect: 'damage' },
+    })
+    expect(out.higherLevelScaling).toBeNull()
+  })
+
+  it('forces higherLevelScaling null for a 9th-level spell — no higher slot exists', () => {
+    const out = normalizeEntry('spell', {
+      name: 'S', level: 9, higherLevelScaling: { dice: '1d6', effect: 'damage' },
+    })
+    expect(out.higherLevelScaling).toBeNull()
+  })
 })
 
 describe('monster normalization', () => {

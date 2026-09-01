@@ -63,13 +63,38 @@ export function hitPointsText(data) {
   return `${data.averageHitPoints ?? ''} (${count}${die}${modText})`.trim()
 }
 
+const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th']
+
 export function spellLevelText(data) {
   const level = Number(data.level)
   const school = data.school || ''
   if (level === 0) return `${school} cantrip`.trim()
-  const ordinals = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th']
-  const ordinal = ordinals[level] || `${data.level}`
+  const ordinal = ORDINALS[level] || `${data.level}`
   return `${ordinal}-level ${school}`.trim()
+}
+
+/**
+ * The real 5e "At Higher Levels" text never enumerates per-level totals —
+ * Fireball's actual wording states the formula once and stops — which is
+ * exactly where a local model tends to go wrong, inventing wrong numbers or
+ * character-level breakpoints when asked to write the full paragraph itself.
+ * Computed here from structured fields so it's always correct regardless of
+ * what the model wrote; falls back to freeform text for spells that scale
+ * some other way (more targets, longer duration, etc).
+ */
+export function higherLevelScalingText(data) {
+  const dice = data.higherLevelScaling?.dice
+  if (!dice) return data.atHigherLevels || ''
+
+  const level = Number(data.level)
+  // A cantrip has no spell slot to upcast with; a 9th-level spell has no
+  // higher slot to cast it from. Neither can use this scaling.
+  if (!Number.isFinite(level) || level < 1 || level > 8) return data.atHigherLevels || ''
+
+  const effect = String(data.higherLevelScaling.effect || 'damage').trim() || 'damage'
+  const base = ORDINALS[level]
+  const next = ORDINALS[level + 1]
+  return `When you cast this spell using a spell slot of ${next} level or higher, the ${effect} increases by ${dice} for each slot level above ${base}.`
 }
 
 export function componentsText(components) {

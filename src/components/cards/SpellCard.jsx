@@ -3,6 +3,7 @@ import {
   castingTimeText,
   componentsText,
   durationText,
+  higherLevelScalingText,
   joinList,
   rangeText,
   spellLevelText,
@@ -173,14 +174,41 @@ function SpellCard({ data, set, onChange, contentType = 'spell' }) {
         />
       </Section>
 
-      {data.atHigherLevels && (
+      {(data.higherLevelScaling?.dice || data.atHigherLevels) && (
         <Section title="At Higher Levels">
-          <EditableText
-            value={data.atHigherLevels}
-            onChange={(v) => set('atHigherLevels', v)}
-            className="mt-1 text-sm leading-relaxed text-white/80"
-            multiline
-          />
+          {data.higherLevelScaling?.dice ? (
+            <>
+              {/* Computed, not freely editable as a sentence — its wording is
+                  fully determined by the dice/effect below plus the spell's
+                  own level, which is what keeps the arithmetic honest. */}
+              <p className="mt-1 text-sm leading-relaxed text-white/80">
+                {higherLevelScalingText(data)}
+              </p>
+              <div className="no-print mt-1.5 flex flex-wrap items-center gap-2 text-xs text-white/50">
+                <span>+</span>
+                <EditableText
+                  value={data.higherLevelScaling.dice}
+                  onChange={(v) => set('higherLevelScaling', { ...data.higherLevelScaling, dice: v })}
+                  placeholder="1d6"
+                  className="!w-14 !px-1 text-xs text-white/70"
+                />
+                <EditableText
+                  value={data.higherLevelScaling.effect}
+                  onChange={(v) => set('higherLevelScaling', { ...data.higherLevelScaling, effect: v })}
+                  placeholder="damage"
+                  className="!w-28 !px-1 text-xs text-white/70"
+                />
+                <span>per slot level</span>
+              </div>
+            </>
+          ) : (
+            <EditableText
+              value={data.atHigherLevels}
+              onChange={(v) => set('atHigherLevels', v)}
+              className="mt-1 text-sm leading-relaxed text-white/80"
+              multiline
+            />
+          )}
         </Section>
       )}
 

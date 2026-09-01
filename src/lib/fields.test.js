@@ -5,6 +5,7 @@ import {
   componentsText,
   durationText,
   formatSpeed,
+  higherLevelScalingText,
   hitPointsText,
   joinList,
   rangeText,
@@ -45,6 +46,49 @@ describe('spellLevelText', () => {
 
   it('uses ordinals above cantrip', () => {
     expect(spellLevelText({ level: 3, school: 'Evocation' })).toBe('3rd-level Evocation')
+  })
+})
+
+describe('higherLevelScalingText', () => {
+  it('matches the real Fireball convention: the formula once, no per-level breakdown', () => {
+    // This is the exact pattern a local model got wrong — inventing
+    // character-level breakpoints (5th/11th/17th, which is cantrip scaling)
+    // instead of the correct linear-per-slot-level convention.
+    const text = higherLevelScalingText({
+      level: 3, higherLevelScaling: { dice: '1d6', effect: 'fire damage' },
+    })
+    expect(text).toBe(
+      'When you cast this spell using a spell slot of 4th level or higher, the fire damage increases by 1d6 for each slot level above 3rd.'
+    )
+  })
+
+  it('works at the lower edge, a 1st-level spell', () => {
+    const text = higherLevelScalingText({ level: 1, higherLevelScaling: { dice: '1d8', effect: 'healing' } })
+    expect(text).toContain('spell slot of 2nd level or higher')
+    expect(text).toContain('above 1st')
+  })
+
+  it('works at the upper edge, an 8th-level spell', () => {
+    const text = higherLevelScalingText({ level: 8, higherLevelScaling: { dice: '1d6', effect: 'damage' } })
+    expect(text).toContain('spell slot of 9th level or higher')
+    expect(text).toContain('above 8th')
+  })
+
+  it('a 9th-level spell has no higher slot to scale into', () => {
+    expect(higherLevelScalingText({ level: 9, higherLevelScaling: { dice: '1d6', effect: 'damage' } })).toBe('')
+  })
+
+  it('a cantrip has no spell slot to upcast with', () => {
+    expect(higherLevelScalingText({ level: 0, higherLevelScaling: { dice: '1d6', effect: 'damage' } })).toBe('')
+  })
+
+  it('falls back to freeform text for a spell that scales some other way', () => {
+    expect(higherLevelScalingText({ level: 3, atHigherLevels: 'You may target one additional creature.' }))
+      .toBe('You may target one additional creature.')
+  })
+
+  it('is empty when neither is set', () => {
+    expect(higherLevelScalingText({ level: 3 })).toBe('')
   })
 })
 

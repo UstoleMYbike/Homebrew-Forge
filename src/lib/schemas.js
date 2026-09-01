@@ -112,7 +112,30 @@ export const SPELL_SCHEMA = {
     durationUnit: { type: ['string', 'null'], enum: [...DDB_DURATION_UNITS, null] },
     ritual: { type: 'boolean' },
     canCastAtHigherLevel: { type: 'boolean' },
-    atHigherLevels: { type: ['string', 'null'] },
+    // Structured so the level-by-level math is computed deterministically
+    // instead of trusted to the model, which reliably invents character-level
+    // breakpoints (5th/11th/17th — that's cantrip scaling, a different 5e
+    // mechanic entirely) instead of the correct spell-slot convention. Set
+    // this whenever the spell scales by adding a fixed die per slot level
+    // above its own level — e.g. Fireball (a 3rd-level spell) adds 1d6 fire
+    // damage per slot level above 3rd: 9d6 at a 4th-level slot, 10d6 at a
+    // 5th-level slot, and so on, with NO character-level breakpoints and NO
+    // need to enumerate every level's total (the real spell text never does).
+    // Leave null for spells that don't scale this way (more targets, longer
+    // duration, or no higher-level benefit at all) — those use atHigherLevels
+    // instead. Never applicable to a cantrip (level 0, no spell slot to
+    // upcast with) or a 9th-level spell (no higher slot exists).
+    higherLevelScaling: {
+      type: ['object', 'null'],
+      properties: {
+        dice: { type: 'string', description: 'e.g. "1d6" — added per slot level above this spell\'s own level' },
+        effect: { type: 'string', description: 'what the dice add to, e.g. "fire damage", "healing" — a few words' },
+      },
+    },
+    atHigherLevels: {
+      type: ['string', 'null'],
+      description: 'Freeform higher-level benefit for a spell that does NOT scale by a simple die increase. Leave null when higherLevelScaling is set instead.',
+    },
     classes: { type: 'array', items: { type: 'string' } },
     description: { type: 'string' },
     assumptions: { type: 'array', items: { type: 'string' } },

@@ -17,6 +17,12 @@ const SPELL = {
   classes: ['Wizard', 'Sorcerer'], description: 'A veil of embers surrounds you.', assumptions: [],
 }
 
+const SCALING_SPELL = {
+  ...SPELL,
+  name: 'Cinderburst', level: 3, atHigherLevels: null,
+  higherLevelScaling: { dice: '1d6', effect: 'fire damage' },
+}
+
 const MONSTER = {
   name: 'Bog Wraith', size: 'Medium', creatureType: 'Undead', alignment: 'Chaotic Evil',
   challengeRating: '5', armorClass: 14, armorClassType: 'natural armor',
@@ -67,6 +73,14 @@ describe('D&D Beyond export', () => {
       .toContain('Range: 60 feet')
   })
 
+  it('computes the at-higher-levels line for a dice-scaling spell, not raw stored text', () => {
+    const out = toDndBeyondText('spell', SCALING_SPELL)
+    expect(out).toContain(
+      'At Higher Levels: When you cast this spell using a spell slot of 4th level or higher, '
+        + 'the fire damage increases by 1d6 for each slot level above 3rd.'
+    )
+  })
+
   it('splits monster hit points into the three inputs the form wants', () => {
     const out = toDndBeyondText('monster', MONSTER)
     expect(out).toContain('Average Hit Points: 45')
@@ -89,7 +103,9 @@ describe('D&D Beyond export', () => {
   })
 
   it('never leaks undefined into any export', () => {
-    for (const [type, data] of [['item', ITEM], ['spell', SPELL], ['monster', MONSTER], ['feat', FEAT]]) {
+    for (const [type, data] of [
+      ['item', ITEM], ['spell', SPELL], ['spell', SCALING_SPELL], ['monster', MONSTER], ['feat', FEAT],
+    ]) {
       expect(toDndBeyondText(type, data)).not.toMatch(/undefined|\[object/)
     }
   })
@@ -112,6 +128,14 @@ describe('Homebrewery markdown', () => {
     expect(toHomebreweryMarkdown('spell', SPELL)).toContain('Concentration, up to 1 Minute')
   })
 
+  it('renders the computed at-higher-levels sentence for a dice-scaling spell', () => {
+    const out = toHomebreweryMarkdown('spell', SCALING_SPELL)
+    expect(out).toContain(
+      '***At Higher Levels.*** When you cast this spell using a spell slot of 4th level or higher, '
+        + 'the fire damage increases by 1d6 for each slot level above 3rd.'
+    )
+  })
+
   it('builds a monster stat block with an ability table and correct modifiers', () => {
     const out = toHomebreweryMarkdown('monster', MONSTER)
     expect(out).toContain('> ## Bog Wraith')
@@ -127,7 +151,9 @@ describe('Homebrewery markdown', () => {
   })
 
   it('never leaks undefined into any markdown', () => {
-    for (const [type, data] of [['item', ITEM], ['spell', SPELL], ['monster', MONSTER], ['feat', FEAT]]) {
+    for (const [type, data] of [
+      ['item', ITEM], ['spell', SPELL], ['spell', SCALING_SPELL], ['monster', MONSTER], ['feat', FEAT],
+    ]) {
       expect(toHomebreweryMarkdown(type, data)).not.toMatch(/undefined|\[object/)
     }
   })
