@@ -8,6 +8,8 @@ import {
   listEntries,
   parseLibraryExport,
 } from '../lib/library'
+import { saveFile } from '../lib/claudeSample'
+import { IS_ARTIFACT } from '../lib/target'
 
 function formatDate(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
@@ -24,7 +26,13 @@ function Library({ onBack, onOpen }) {
   const fileInputRef = useRef(null)
 
   async function refresh() {
-    setEntries(await listEntries())
+    try {
+      setEntries(await listEntries())
+    } catch {
+      // Library storage can be blocked in a framed view.
+      setEntries([])
+      setError('Library storage is not available in this view, so nothing here will be kept.')
+    }
   }
 
   useEffect(() => {
@@ -66,11 +74,24 @@ function Library({ onBack, onOpen }) {
       setError('Nothing to export yet.')
       return
     }
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const filename = `homebrew-forge-library-${new Date().toISOString().slice(0, 10)}.json`
+    const json = JSON.stringify(payload, null, 2)
+    if (IS_ARTIFACT) {
+      // Download links are inert in a published page; the viewer saves it instead.
+      try {
+        if (await saveFile(filename, json)) {
+          flashToast(`Exported ${payload.entries.length} ${payload.entries.length === 1 ? 'entry' : 'entries'}`)
+        }
+      } catch (err) {
+        setError(err.message)
+      }
+      return
+    }
+    const blob = new Blob([json], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `homebrew-forge-library-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = filename
     a.click()
     URL.revokeObjectURL(url)
     flashToast(`Exported ${payload.entries.length} ${payload.entries.length === 1 ? 'entry' : 'entries'}`)

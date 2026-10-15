@@ -12,6 +12,7 @@ body,
 
 body {
   margin: 0;
+  background: #151221;
   overscroll-behavior-y: none;
 }
 

@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { copyToClipboard, toDndBeyondText, toHomebreweryMarkdown } from '../lib/exporters'
+import { saveFile } from '../lib/claudeSample'
+import { IS_ARTIFACT } from '../lib/target'
+
+function fileSafe(name) {
+  return String(name || 'entry').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'entry'
+}
 
 function ExportBar({ contentType, data }) {
   const [sheet, setSheet] = useState(null) // { title, text, copied }
@@ -36,6 +42,18 @@ function ExportBar({ contentType, data }) {
     window.print()
   }
 
+  // A published page cannot open the print dialog, so the artifact offers the
+  // Markdown as a file instead.
+  async function handleSaveFile() {
+    setError('')
+    try {
+      const saved = await saveFile(`${fileSafe(data.name)}.md`, toHomebreweryMarkdown(contentType, data))
+      if (saved) flashToast('File saved')
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   return (
     <>
       <div className="no-print mt-4">
@@ -64,10 +82,10 @@ function ExportBar({ contentType, data }) {
             </button>
             <button
               type="button"
-              onClick={handlePdf}
+              onClick={IS_ARTIFACT ? handleSaveFile : handlePdf}
               className="flex-1 rounded-xl border border-white/15 py-3 text-sm font-medium text-white/80"
             >
-              Export as PDF
+              {IS_ARTIFACT ? 'Save as file' : 'Export as PDF'}
             </button>
           </div>
         </div>

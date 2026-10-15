@@ -11,7 +11,8 @@
     "lint": "oxlint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "make-artifact": "node scripts/make-artifact.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",

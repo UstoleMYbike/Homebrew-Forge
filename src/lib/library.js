@@ -68,6 +68,11 @@ async function run(mode, fn) {
   })
 }
 
+/** randomUUID needs a secure context; a framed view may not offer one. */
+export function newId() {
+  return globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+}
+
 /** Entries are named by their content's own name field, for search. */
 function nameOf(data) {
   return (data?.name || '').trim() || 'Untitled'
@@ -95,7 +100,7 @@ export async function getEntry(id) {
 export async function saveEntry({ contentType, data }) {
   const now = Date.now()
   const entry = {
-    id: crypto.randomUUID(),
+    id: newId(),
     contentType,
     name: nameOf(data),
     data,
@@ -196,7 +201,7 @@ export function parseLibraryExport(parsed) {
 export async function importEntries(entries) {
   await run('readwrite', (store) => {
     for (const raw of entries) {
-      const id = typeof raw.id === 'string' && raw.id ? raw.id : crypto.randomUUID()
+      const id = typeof raw.id === 'string' && raw.id ? raw.id : newId()
       const now = Date.now()
       const data = normalizeEntry(raw.contentType, raw.data)
       store.put({

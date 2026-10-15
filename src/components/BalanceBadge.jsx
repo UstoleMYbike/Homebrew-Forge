@@ -36,7 +36,7 @@ function BalanceBadge({ contentType, data, autoCheck }) {
     const checking = JSON.stringify(data)
     try {
       const system = buildBalanceCheckPrompt(CONTENT_TYPES[contentType].promptLabel)
-      const raw = await callLLM({ system, prompt: checking })
+      const raw = await callLLM({ system, prompt: checking, cache: true })
       setFlags(normalizeFlags(parseJsonResponse(raw)))
       setCheckedSignature(checking)
       setStatus('done')

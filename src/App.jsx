@@ -3,8 +3,10 @@ import Settings from './screens/Settings'
 import Home from './screens/Home'
 import Library from './screens/Library'
 import EntryPreview from './screens/EntryPreview'
+import ArtifactSettings from './screens/ArtifactSettings'
 import { getLLMConfig } from './lib/llmConfig'
 import { updateEntry } from './lib/library'
+import { IS_ARTIFACT } from './lib/target'
 
 function App() {
   const [screen, setScreen] = useState(null) // 'setup' | 'home' | 'library'
@@ -13,7 +15,8 @@ function App() {
   const [autoCheck, setAutoCheck] = useState(false)
 
   useEffect(() => {
-    setScreen(getLLMConfig() ? 'home' : 'setup')
+    // Claude needs no server, so the artifact never starts on a setup screen.
+    setScreen(IS_ARTIFACT || getLLMConfig() ? 'home' : 'setup')
   }, [])
 
   // autoCheck is only set for freshly generated content — opening an existing
@@ -28,7 +31,13 @@ function App() {
   // what the DM sees on the card.
   async function handleEntryChange(data) {
     setOpenEntry((current) => (current ? { ...current, data } : current))
-    if (openEntry) await updateEntry(openEntry.id, data)
+    if (!openEntry) return
+    try {
+      await updateEntry(openEntry.id, data)
+    } catch {
+      // Storage can be blocked in a framed view. The card keeps working in
+      // memory; there is just nothing to write back to.
+    }
   }
 
   if (screen === null) return null
@@ -46,6 +55,10 @@ function App() {
         }}
       />
     )
+  }
+
+  if (screen === 'setup' && IS_ARTIFACT) {
+    return <ArtifactSettings onBack={() => setScreen('home')} />
   }
 
   if (screen === 'setup') {

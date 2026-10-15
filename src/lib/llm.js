@@ -1,5 +1,7 @@
 import { getLLMConfig } from './llmConfig'
 import { LLMError, getProvider } from './providers'
+import { askClaude } from './claudeSample'
+import { IS_ARTIFACT } from './target'
 
 export { LLMError }
 
@@ -142,7 +144,11 @@ export async function pingModel(providerId, baseUrl, model) {
   }
 }
 
-export async function callLLM({ system, prompt, maxTokens = 2000, json = true }) {
+export async function callLLM({ system, prompt, maxTokens = 2000, json = true, cache = false }) {
+  // In the published artifact Claude is the model. The reply is still plain
+  // text that goes through the same JSON safety net as a local model's would.
+  if (IS_ARTIFACT) return askClaude({ system, prompt, cache })
+
   const config = getLLMConfig()
   if (!config) {
     throw new LLMError('No local LLM server is configured. Set one up in Settings.')

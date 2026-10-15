@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CONTENT_TYPES } from '../lib/schemas'
 import { buildCoreGenerationPrompt } from '../lib/prompts'
 import { LLMError, RawOutputError, callLLM, parseJsonResponse } from '../lib/llm'
-import { saveEntry } from '../lib/library'
+import { newId, saveEntry } from '../lib/library'
+import { getSample } from '../lib/claudeSample'
+import { IS_ARTIFACT } from '../lib/target'
 import { normalizeEntry } from '../lib/normalize'
 import InstallButton from '../components/InstallButton'
 
@@ -12,8 +14,26 @@ function Home({ onEditSettings, onOpenLibrary, onGenerated }) {
   const [status, setStatus] = useState('idle') // idle | loading | error
   const [error, setError] = useState('')
   const [rawOutput, setRawOutput] = useState('')
+  // In the artifact, Claude is reached through the page's own capability, which
+  // is absent when the page is opened outside Claude.
+  const [claude, setClaude] = useState(IS_ARTIFACT ? 'checking' : 'ready')
 
-  const canGenerate = Boolean(contentType) && description.trim().length > 0 && status !== 'loading'
+  useEffect(() => {
+    if (!IS_ARTIFACT) return undefined
+    let live = true
+    getSample().then((sample) => {
+      if (live) setClaude(sample ? 'ready' : 'unavailable')
+    })
+    return () => {
+      live = false
+    }
+  }, [])
+
+  const canGenerate =
+    Boolean(contentType) &&
+    description.trim().length > 0 &&
+    status !== 'loading' &&
+    claude !== 'unavailable'
 
   async function handleGenerate() {
     if (!canGenerate) return
@@ -26,7 +46,15 @@ function Home({ onEditSettings, onOpenLibrary, onGenerated }) {
       const system = buildCoreGenerationPrompt(promptLabel, schema)
       const text = await callLLM({ system, prompt: description.trim() })
       const generated = normalizeEntry(contentType, parseJsonResponse(text))
-      const entry = await saveEntry({ contentType, data: generated })
+      let entry
+      try {
+        entry = await saveEntry({ contentType, data: generated })
+      } catch {
+        // A blocked library must not throw away a finished generation: open it
+        // unsaved, and say so.
+        const now = Date.now()
+        entry = { id: newId(), contentType, name: generated.name || 'Untitled', data: generated, createdAt: now, updatedAt: now }
+      }
       setStatus('idle')
       onGenerated(entry)
     } catch (err) {
@@ -64,7 +92,7 @@ function Home({ onEditSettings, onOpenLibrary, onGenerated }) {
           <button
             type="button"
             onClick={onEditSettings}
-            aria-label="Connection settings"
+            aria-label={IS_ARTIFACT ? 'Claude settings' : 'Connection settings'}
             className="rounded-full border border-white/10 p-2.5 text-white/60"
           >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -117,6 +145,11 @@ function Home({ onEditSettings, onOpenLibrary, onGenerated }) {
         </div>
 
         <div className="mt-auto pb-2">
+          {claude === 'unavailable' && (
+            <p className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              Claude is not available in this view. Open this page inside Claude to generate.
+            </p>
+          )}
           {error && (
             <div className="mb-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
               <p className="text-sm text-red-200">{error}</p>
@@ -146,7 +179,7 @@ function Home({ onEditSettings, onOpenLibrary, onGenerated }) {
           </button>
           {status === 'loading' && (
             <p className="mt-2 text-center text-xs text-white/40">
-              Local generation can take a minute.
+              {IS_ARTIFACT ? 'Claude is writing this. Usually 10 to 40 seconds.' : 'Local generation can take a minute.'}
             </p>
           )}
         </div>
